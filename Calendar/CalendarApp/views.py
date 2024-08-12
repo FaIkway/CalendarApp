@@ -41,19 +41,26 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Event
 from .forms import EventForm
+from django.utils import timezone
 
 @login_required
-def calendar_view(request):
+def home(request):
     events = Event.objects.filter(user=request.user)
-    form = EventForm()
     if request.method == 'POST':
         form = EventForm(request.POST)
         if form.is_valid():
             event = form.save(commit=False)
             event.user = request.user
             event.save()
-            return redirect('calendar_view')
-    return render(request, 'calendar.html', {'events': events, 'form': form})
+            print(f"Wydarzenie dodane: {event.title}, {event.start}, {event.end}")  # Debugowanie
+            return redirect('home')
+        else:
+            print("Form is not valid")
+            print(form.errors)
+    else:
+        form = EventForm()
+    return render(request, 'home.html', {'events': events, 'form': form})
+
 
 @login_required
 def add_event(request):
@@ -63,7 +70,7 @@ def add_event(request):
             event = form.save(commit=False)
             event.user = request.user
             event.save()
-            return redirect('calendar_view')
+            return redirect('home')
     else:
         form = EventForm()
     return render(request, 'add_event.html', {'form': form})
