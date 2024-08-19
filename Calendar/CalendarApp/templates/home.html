@@ -1,10 +1,10 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendar</title>
+    <title>Kalendarz</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -16,33 +16,72 @@
 
     <style>
         body {
-            background-color: #f4f4f4;
+            background-color: #ffffff;
             color: #333;
             font-family: 'Roboto', sans-serif;
         }
         .calendar-container {
-            background-color: #ffffff;
+            background-color: #f8f9fa;
             padding: 20px;
             height: 100vh;
-            overflow-y: auto;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             border-radius: 12px;
-            margin-left: 20px;
+            margin: 0 auto;
+            max-width: 1200px;
+        }
+        .fc-toolbar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
         }
         .fc-toolbar h2 {
             font-size: 1.5rem;
             font-weight: bold;
         }
+        .fc-button {
+            margin-right: 5px;
+        }
+        .fc-day-header {
+            text-transform: uppercase;
+            font-size: 1rem;
+            color: #6c757d;
+        }
+        .fc-timegrid-slot-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .fc-event {
+            border-width: 4px !important;  /* Zwiększenie szerokości ramki */
+            border-style: solid;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            padding: 2px;
+        }
+        .fc-event.lime-border {
+            border-color: lime !important;
+        }
+    
+        .fc-event.cyan-border {
+            border-color: cyan !important;
+        }
+    
+        .fc-event.pink-border {
+            border-color: pink !important;
+        }
+        .fc-daygrid-day-frame {
+            background-color: #ffffff;
+            border: 1px solid #e9ecef;
+        }
     </style>
 </head>
-<body>
+<body> 
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12 calendar-container">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2>Your Calendar</h2>
+                    <h2>Kalendarz</h2>
                     <!-- Add Event Button -->
-                    <button class="btn btn-primary" id="addEventButton">Add Event</button>
+                    <button class="btn btn-primary" id="addEventButton">Dodaj Wydarzenie</button>
                 </div>
                 <div id="calendar"></div>
             </div>
@@ -56,61 +95,189 @@
                 <form method="POST" id="eventForm">
                     {% csrf_token %}
                     <div class="modal-header">
-                        <h5 class="modal-title" id="eventModalLabel">Add Event</h5>
+                        <h5 class="modal-title" id="eventModalLabel">Dodaj Wydarzenie</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="title" class="form-label">Title</label>
+                            <label for="title" class="form-label">Tytuł</label>
                             <input type="text" class="form-control" id="title" name="title" required>
                         </div>
                         <div class="mb-3">
-                            <label for="start" class="form-label">Start</label>
+                            <label for="start" class="form-label">Początek</label>
                             <input type="datetime-local" class="form-control" id="start" name="start" required>
                         </div>
                         <div class="mb-3">
-                            <label for="end" class="form-label">End</label>
+                            <label for="end" class="form-label">Koniec</label>
                             <input type="datetime-local" class="form-control" id="end" name="end" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="color" class="form-label">Kolor</label>
+                            <select class="form-control" id="color" name="color">
+                                <option value="red">Czerwony</option>
+                                <option value="blue">Niebieski</option>
+                                <option value="green">Zielony</option>
+                                <option value="orange">Pomarańczowy</option>
+                                <option value="purple">Fioletowy</option>
+                                <option value="yellow">Żółty</option>
+                                <option value="gray">Grafitowy</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="importance" class="form-label">Ważność</label>
+                            <select class="form-control" id="importance" name="importance">
+                                <option value="lime">Ważne (Limonkowy)</option>
+                                <option value="cyan">Średnie (Cyjan)</option>
+                                <option value="pink">Mało ważne (Różowy)</option>
+                            </select>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                        <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('calendar');
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'timeGridWeek',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    <!-- Modal for editing events -->
+    <div class="modal fade" id="editEventModal" tabindex="-1" aria-labelledby="editEventModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" id="editEventForm">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editEventModalLabel">Edytuj Wydarzenie</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Pola formularza zostaną dynamicznie wypełnione przez JavaScript -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                        <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+                        <button type="button" class="btn btn-danger" id="deleteEventButton">Usuń</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'timeGridWeek',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            firstDay: 1,  // Tydzień zaczyna się od poniedziałku
+            allDaySlot: false,
+            slotMinTime: '00:00:00',
+            slotMaxTime: '24:00:00',
+            nowIndicator: true,
+            slotDuration: '01:00:00',
+            slotLabelFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                omitZeroMinute: false,
+                meridiem: false,
+                hour12: false
+            },
+            expandRows: true,
+            views: {
+                timeGridWeek: {
+                    titleFormat: { month: 'long', day: 'numeric', year: 'numeric' },
+                    slotMinTime: '00:00:00',
+                    slotMaxTime: '24:00:00'
+                }
+            },
+            events: [
+                {% for event in events %}
+                {
+                    id: '{{ event.id }}',
+                    title: '{{ event.title }}',
+                    start: '{{ event.start|date:"Y-m-d\TH:i:s" }}',
+                    end: '{{ event.end|date:"Y-m-d\TH:i:s" }}',
+                    color: '{{ event.color }}',
+                    textColor: 'white',
+                    classNames: [
+                        {% if event.importance == "lime" %}
+                        'lime-border'
+                        {% elif event.importance == "cyan" %}
+                        'cyan-border'
+                        {% elif event.importance == "pink" %}
+                        'pink-border'
+                        {% endif %}
+                    ],
                 },
-                events: [
-                    {% for event in events %}
-                    {
-                        title: '{{ event.title }}',
-                        start: '{{ event.start|date:"Y-m-d\TH:i:s" }}',
-                        end: '{{ event.end|date:"Y-m-d\TH:i:s" }}',
-                    },
-                    {% endfor %}
-                ]
-            });
-            console.log(calendar.getEvents());  // Sprawdzenie, co jest przekazywane do kalendarza
-            calendar.render();
-
-            document.getElementById('addEventButton').addEventListener('click', function() {
-                document.getElementById('eventForm').reset();
-                var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
-                eventModal.show();
-            });
+                {% endfor %}
+            ],
+            slotEventOverlap: false,
+            eventOverlap: true,
+            dayHeaderFormat: { weekday: 'long' },  // Dni tygodnia na górze
+            eventClick: function(info) {
+                var eventObj = info.event;
+                var eventId = eventObj.id;
+    
+                // Wypełnij dane w formularzu edycji
+                document.getElementById('editEventForm').action = '/edit_event/' + eventId + '/';
+                document.querySelector('#editEventModal .modal-body').innerHTML = `
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Tytuł</label>
+                        <input type="text" class="form-control" id="title" name="title" value="${eventObj.title}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="start" class="form-label">Początek</label>
+                        <input type="datetime-local" class="form-control" id="start" name="start" value="${eventObj.start.toISOString().slice(0,16)}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="end" class="form-label">Koniec</label>
+                        <input type="datetime-local" class="form-control" id="end" name="end" value="${eventObj.end.toISOString().slice(0,16)}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="color" class="form-label">Kolor</label>
+                        <select class="form-control" id="color" name="color">
+                            <option value="red" ${eventObj.backgroundColor == 'red' ? 'selected' : ''}>Czerwony</option>
+                            <option value="blue" ${eventObj.backgroundColor == 'blue' ? 'selected' : ''}>Niebieski</option>
+                            <option value="green" ${eventObj.backgroundColor == 'green' ? 'selected' : ''}>Zielony</option>
+                            <option value="orange" ${eventObj.backgroundColor == 'orange' ? 'selected' : ''}>Pomarańczowy</option>
+                            <option value="purple" ${eventObj.backgroundColor == 'purple' ? 'selected' : ''}>Fioletowy</option>
+                            <option value="yellow" ${eventObj.backgroundColor == 'yellow' ? 'selected' : ''}>Żółty</option>
+                            <option value="gray" ${eventObj.backgroundColor == 'gray' ? 'selected' : ''}>Grafitowy</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="importance" class="form-label">Ważność</label>
+                        <select class="form-control" id="importance" name="importance">
+                            <option value="lime" ${eventObj.borderColor == 'lime' ? 'selected' : ''}>Ważne (Limonkowy)</option>
+                            <option value="cyan" ${eventObj.borderColor == 'cyan' ? 'selected' : ''}>Średnie (Cyjan)</option>
+                            <option value="pink" ${eventObj.borderColor == 'pink' ? 'selected' : ''}>Mało ważne (Różowy)</option>
+                        </select>
+                    </div>
+                `;
+                var editEventModal = new bootstrap.Modal(document.getElementById('editEventModal'));
+                editEventModal.show();
+    
+                // Obsługa przycisku "Delete"
+                document.getElementById('deleteEventButton').onclick = function() {
+                    if (confirm('Czy na pewno chcesz usunąć to wydarzenie?')) {
+                        document.getElementById('editEventForm').action = '/delete_event/' + eventId + '/';
+                        document.getElementById('editEventForm').submit();
+                    }
+                };
+            }
         });
+        calendar.render();
+    
+        document.getElementById('addEventButton').addEventListener('click', function() {
+            document.getElementById('eventForm').reset();
+            var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+            eventModal.show();
+        });
+    });
     </script>
 
     <!-- Bootstrap JS -->
