@@ -1,11 +1,10 @@
-{% load static %}
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kalendarz</title>
-    
+    <title>Calendar</title>
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FullCalendar CSS -->
@@ -16,183 +15,293 @@
 
     <style>
         body {
-            background-color: #ffffff;
-            color: #333;
+            background-color: #1a1a1a;
+            color: #f4f4f4;
             font-family: 'Roboto', sans-serif;
         }
-        .calendar-container {
-            background-color: #f8f9fa;
+
+        /* Left Sidebar Style */
+        .sidebar-container {
+            background-color: #2b2b2b;
             padding: 20px;
             height: 100vh;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            border-radius: 12px;
-            margin: 0 auto;
-            max-width: 1200px;
+            border-right: 1px solid #3c3c3c;
+            overflow-y: auto;
         }
-        .fc-toolbar {
-            display: flex;
-            justify-content: space-between;
+
+        .mini-calendar-container {
             margin-bottom: 20px;
         }
-        .fc-toolbar h2 {
-            font-size: 1.5rem;
+
+        .mini-calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-weight: bold;
         }
-        .fc-button {
-            margin-right: 5px;
+
+        .mini-calendar-table {
+            width: 100%;
+            text-align: center;
+            margin-top: 10px;
         }
-        .fc-day-header {
-            text-transform: uppercase;
-            font-size: 1rem;
-            color: #6c757d;
+
+        .mini-calendar-table th,
+        .mini-calendar-table td {
+            padding: 5px;
         }
-        .fc-timegrid-slot-label {
-            font-size: 0.9rem;
-            color: #6c757d;
+
+        .mini-calendar-table button.active {
+            background-color: #1976d2;
+            color: white;
+            border-radius: 50%;
         }
-        .fc-event {
-            border-width: 4px !important;  /* Zwiększenie szerokości ramki */
-            border-style: solid;
+
+        .mini-calendar-table button {
+            border: none;
+            background-color: transparent;
+            color: #f4f4f4;
+            cursor: pointer;
+            padding: 5px;
+            transition: background-color 0.2s;
+        }
+
+        .mini-calendar-table button:hover {
+            background-color: #343a40;
+        }
+
+        /* Calendar and toolbar */
+        .calendar-container {
+            padding: 0;
+            height: 100vh;
+            background-color: #2b2b2b;
+            overflow: hidden;
+        }
+
+        /* Sticky Toolbar for Days and Navigation */
+        .toolbar {
+            background-color: #333;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #444;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .toolbar .view-buttons button {
+            margin-left: 10px;
+        }
+
+        .toolbar .calendar-nav button {
+            margin-right: 10px;
+        }
+
+        .btn-create-event {
+            margin-bottom: 20px;
+        }
+
+        /* FullCalendar Customization */
+        .fc {
+            height: calc(100vh - 100px); /* Full height for the calendar */
+            overflow-y: scroll;
+        }
+
+        .fc .fc-timegrid-slot {
+            height: 40px !important; /* Adjusts height of each time slot */
+        }
+
+        .fc .fc-col-header-cell {
+            font-size: 1.2rem; /* Date font size */
+            padding: 10px 0;
+            color: #f4f4f4;
+            background-color: #333; /* Keep background fixed */
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        .fc .fc-timegrid-slot-label {
+            font-size: 0.9rem; /* Time label size */
+            color: #999; /* Lighter color for time labels */
+            padding-right: 10px;
+        }
+
+        .fc .fc-timegrid-slot-lane {
+            border: none !important; /* Removes borders from time slots */
+        }
+
+        .fc .fc-timegrid-slot-frame {
+            background-color: #2b2b2b;
+        }
+
+        .fc .fc-daygrid-day {
+            font-size: 1rem; /* Day number size in month view */
+        }
+
+        .fc .fc-day {
+            padding: 5px;
+            background-color: #2b2b2b;
+            border: 1px solid #444; /* Keep gridlines for hours */
+        }
+
+        .fc .fc-daygrid-day-number {
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        .fc .fc-event {
+            font-size: 0.9rem; /* Event font size */
+            padding: 5px;
+        }
+
+        /* Custom Context Menu */
+        .context-menu {
+            position: absolute;
+            display: none;
+            background-color: #333;
             border-radius: 5px;
-            font-size: 0.9rem;
-            padding: 2px;
+            padding: 10px;
+            color: white;
+            z-index: 1000;
         }
-        .fc-event.lime-border {
-            border-color: lime !important;
+
+        .context-menu button {
+            display: block;
+            width: 100%;
+            padding: 5px;
+            background: none;
+            border: none;
+            color: white;
+            text-align: left;
+            cursor: pointer;
         }
-    
-        .fc-event.cyan-border {
-            border-color: cyan !important;
-        }
-    
-        .fc-event.pink-border {
-            border-color: pink !important;
-        }
-        .fc-daygrid-day-frame {
-            background-color: #ffffff;
-            border: 1px solid #e9ecef;
+
+        .context-menu button:hover {
+            background-color: #444;
         }
     </style>
 </head>
-<body> 
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12 calendar-container">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2>Kalendarz</h2>
-                    <!-- Add Event Button -->
-                    <button class="btn btn-primary" id="addEventButton">Dodaj Wydarzenie</button>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar with mini calendar -->
+        <div class="col-md-2 sidebar-container">
+            <button class="btn btn-primary btn-create-event" id="createEventButton">Create Event</button>
+            <div class="mini-calendar-container">
+                <div class="mini-calendar-header">
+                    <span id="currentMonth">September 2024</span>
+                    <button id="prevMonth" class="calendar-nav-btn">◄</button>
+                    <button id="nextMonth" class="calendar-nav-btn">►</button>
                 </div>
-                <div id="calendar"></div>
+                <table class="mini-calendar-table">
+                    <thead>
+                    <tr>
+                        <th>Mo</th><th>Tu</th><th>We</th><th>Th</th><th>Fr</th><th>Sa</th><th>Su</th>
+                    </tr>
+                    </thead>
+                    <tbody id="calendarBody">
+                    <!-- Dynamic days will be rendered here -->
+                    </tbody>
+                </table>
             </div>
         </div>
-    </div>
 
-    <!-- Modal for adding events -->
-    <div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="POST" id="eventForm">
-                    {% csrf_token %}
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="eventModalLabel">Dodaj Wydarzenie</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="title" class="form-label">Tytuł</label>
-                            <input type="text" class="form-control" id="title" name="title" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="start" class="form-label">Początek</label>
-                            <input type="datetime-local" class="form-control" id="start" name="start" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="end" class="form-label">Koniec</label>
-                            <input type="datetime-local" class="form-control" id="end" name="end" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="color" class="form-label">Kolor</label>
-                            <select class="form-control" id="color" name="color">
-                                <option value="red">Czerwony</option>
-                                <option value="blue">Niebieski</option>
-                                <option value="green">Zielony</option>
-                                <option value="orange">Pomarańczowy</option>
-                                <option value="purple">Fioletowy</option>
-                                <option value="yellow">Żółty</option>
-                                <option value="gray">Grafitowy</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="importance" class="form-label">Ważność</label>
-                            <select class="form-control" id="importance" name="importance">
-                                <option value="lime">Ważne (Limonkowy)</option>
-                                <option value="cyan">Średnie (Cyjan)</option>
-                                <option value="pink">Mało ważne (Różowy)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
-                        <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
-                    </div>
-                </form>
+        <!-- Main Calendar -->
+        <div class="col-md-10 calendar-container">
+            <div class="toolbar">
+                <div class="view-buttons">
+                    <button class="btn btn-secondary" id="monthViewButton">Month</button>
+                    <button class="btn btn-secondary" id="weekViewButton">Week</button>
+                    <button class="btn btn-secondary" id="dayViewButton">Day</button>
+                </div>
+                <div class="calendar-nav">
+                    <button class="btn btn-secondary" id="prevButton">Prev</button>
+                    <button class="btn btn-secondary" id="todayButton">Today</button>
+                    <button class="btn btn-secondary" id="nextButton">Next</button>
+                </div>
+                <button class="btn btn-outline-light" id="settingsButton">Settings</button>
             </div>
-        </div>
-    </div>
 
-    <!-- Modal for editing events -->
-    <div class="modal fade" id="editEventModal" tabindex="-1" aria-labelledby="editEventModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="POST" id="editEventForm">
-                    {% csrf_token %}
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="editEventModalLabel">Edytuj Wydarzenie</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <!-- Pola formularza zostaną dynamicznie wypełnione przez JavaScript -->
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
-                        <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
-                        <button type="button" class="btn btn-danger" id="deleteEventButton">Usuń</button>
-                    </div>
-                </form>
-            </div>
+            <div id="calendar"></div>
         </div>
     </div>
+</div>
+
+<!-- Modal for adding/editing events -->
+<div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="eventForm">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eventModalLabel">Add/Edit Event</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="start" class="form-label">Start</label>
+                        <input type="datetime-local" class="form-control" id="start" name="start" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="end" class="form-label">End</label>
+                        <input type="datetime-local" class="form-control" id="end" name="end" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="color" class="form-label">Color</label>
+                        <select class="form-control" id="color" name="color">
+                            <option value="red">Red</option>
+                            <option value="blue">Blue</option>
+                            <option value="green">Green</option>
+                            <option value="orange">Orange</option>
+                            <option value="purple">Purple</option>
+                            <option value="yellow">Yellow</option>
+                            <option value="gray">Gray</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="importance" class="form-label">Importance</label>
+                        <select class="form-control" id="importance" name="importance">
+                            <option value="lime">Important (Lime)</option>
+                            <option value="cyan">Medium (Cyan)</option>
+                            <option value="pink">Low (Pink)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                    <!-- Add Delete Button Here -->
+                    <button type="button" class="btn btn-danger" id="deleteEventButton">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         var calendarEl = document.getElementById('calendar');
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'timeGridWeek',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            },
-            firstDay: 1,  // Tydzień zaczyna się od poniedziałku
-            allDaySlot: false,
-            slotMinTime: '00:00:00',
-            slotMaxTime: '24:00:00',
-            nowIndicator: true,
-            slotDuration: '01:00:00',
-            slotLabelFormat: {
-                hour: '2-digit',
-                minute: '2-digit',
-                omitZeroMinute: false,
-                meridiem: false,
-                hour12: false
-            },
-            expandRows: true,
-            views: {
-                timeGridWeek: {
-                    titleFormat: { month: 'long', day: 'numeric', year: 'numeric' },
-                    slotMinTime: '00:00:00',
-                    slotMaxTime: '24:00:00'
-                }
+            height: "auto",  // Full height for the calendar
+            headerToolbar: false,
+            slotMinTime: '00:00:00', // 24-hour system starting from midnight
+            slotMaxTime: '24:00:00', // End of the day
+            dateClick: function (info) {
+                var clickedDate = info.dateStr;
+                document.getElementById('start').value = clickedDate.slice(0, 16);
+                document.getElementById('end').value = clickedDate.slice(0, 16);
+                var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+                eventModal.show();
             },
             events: [
                 {% for event in events %}
@@ -203,84 +312,136 @@
                     end: '{{ event.end|date:"Y-m-d\TH:i:s" }}',
                     color: '{{ event.color }}',
                     textColor: 'white',
-                    classNames: [
-                        {% if event.importance == "lime" %}
-                        'lime-border'
-                        {% elif event.importance == "cyan" %}
-                        'cyan-border'
-                        {% elif event.importance == "pink" %}
-                        'pink-border'
-                        {% endif %}
-                    ],
+                    borderColor: '{{ event.importance }}',
                 },
                 {% endfor %}
             ],
             slotEventOverlap: false,
             eventOverlap: true,
-            dayHeaderFormat: { weekday: 'long' },  // Dni tygodnia na górze
+            allDaySlot: false,
             eventClick: function(info) {
-                var eventObj = info.event;
-                var eventId = eventObj.id;
-    
-                // Wypełnij dane w formularzu edycji
-                document.getElementById('editEventForm').action = '/edit_event/' + eventId + '/';
-                document.querySelector('#editEventModal .modal-body').innerHTML = `
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Tytuł</label>
-                        <input type="text" class="form-control" id="title" name="title" value="${eventObj.title}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="start" class="form-label">Początek</label>
-                        <input type="datetime-local" class="form-control" id="start" name="start" value="${eventObj.start.toISOString().slice(0,16)}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="end" class="form-label">Koniec</label>
-                        <input type="datetime-local" class="form-control" id="end" name="end" value="${eventObj.end.toISOString().slice(0,16)}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="color" class="form-label">Kolor</label>
-                        <select class="form-control" id="color" name="color">
-                            <option value="red" ${eventObj.backgroundColor == 'red' ? 'selected' : ''}>Czerwony</option>
-                            <option value="blue" ${eventObj.backgroundColor == 'blue' ? 'selected' : ''}>Niebieski</option>
-                            <option value="green" ${eventObj.backgroundColor == 'green' ? 'selected' : ''}>Zielony</option>
-                            <option value="orange" ${eventObj.backgroundColor == 'orange' ? 'selected' : ''}>Pomarańczowy</option>
-                            <option value="purple" ${eventObj.backgroundColor == 'purple' ? 'selected' : ''}>Fioletowy</option>
-                            <option value="yellow" ${eventObj.backgroundColor == 'yellow' ? 'selected' : ''}>Żółty</option>
-                            <option value="gray" ${eventObj.backgroundColor == 'gray' ? 'selected' : ''}>Grafitowy</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="importance" class="form-label">Ważność</label>
-                        <select class="form-control" id="importance" name="importance">
-                            <option value="lime" ${eventObj.borderColor == 'lime' ? 'selected' : ''}>Ważne (Limonkowy)</option>
-                            <option value="cyan" ${eventObj.borderColor == 'cyan' ? 'selected' : ''}>Średnie (Cyjan)</option>
-                            <option value="pink" ${eventObj.borderColor == 'pink' ? 'selected' : ''}>Mało ważne (Różowy)</option>
-                        </select>
-                    </div>
-                `;
-                var editEventModal = new bootstrap.Modal(document.getElementById('editEventModal'));
-                editEventModal.show();
-    
-                // Obsługa przycisku "Delete"
+                // Open modal with event data on click
+                document.getElementById('title').value = info.event.title;
+                document.getElementById('start').value = info.event.start.toISOString().slice(0, 16);
+                document.getElementById('end').value = info.event.end.toISOString().slice(0, 16);
+                document.getElementById('color').value = info.event.backgroundColor;
+                document.getElementById('importance').value = info.event.borderColor;
+                
+                var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+                eventModal.show();
+
+                // Delete functionality (inside modal)
                 document.getElementById('deleteEventButton').onclick = function() {
-                    if (confirm('Czy na pewno chcesz usunąć to wydarzenie?')) {
-                        document.getElementById('editEventForm').action = '/delete_event/' + eventId + '/';
-                        document.getElementById('editEventForm').submit();
+                    if (confirm('Are you sure you want to delete this event?')) {
+                        info.event.remove(); // Remove event from the calendar
+                        eventModal.hide(); // Close the modal after deleting
                     }
                 };
             }
         });
         calendar.render();
-    
-        document.getElementById('addEventButton').addEventListener('click', function() {
-            document.getElementById('eventForm').reset();
+
+        // Create Event button functionality
+        document.getElementById('createEventButton').addEventListener('click', function () {
+            var now = new Date();
+            var currentDateTime = now.toISOString().slice(0, 16);
+            document.getElementById('start').value = currentDateTime;
+            document.getElementById('end').value = currentDateTime;
             var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
             eventModal.show();
         });
-    });
-    </script>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        // Navigation buttons
+        document.getElementById('prevButton').addEventListener('click', function () {
+            calendar.prev();
+        });
+
+        document.getElementById('nextButton').addEventListener('click', function () {
+            calendar.next();
+        });
+
+        document.getElementById('todayButton').addEventListener('click', function () {
+            calendar.today();
+        });
+
+        // View buttons
+        document.getElementById('monthViewButton').addEventListener('click', function () {
+            calendar.changeView('dayGridMonth');
+        });
+
+        document.getElementById('weekViewButton').addEventListener('click', function () {
+            calendar.changeView('timeGridWeek');
+        });
+
+        document.getElementById('dayViewButton').addEventListener('click', function () {
+            calendar.changeView('timeGridDay');
+        });
+
+        // Settings button
+        document.getElementById('settingsButton').addEventListener('click', function () {
+            window.location.href = '/settings';
+        });
+
+        // Mini calendar script
+        const currentMonthDisplay = document.getElementById('currentMonth');
+        const calendarBody = document.getElementById('calendarBody');
+        let currentDate = new Date();
+
+        function renderCalendar(date) {
+            calendarBody.innerHTML = '';
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            currentMonthDisplay.textContent = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            let day = 1;
+            for (let i = 0; i < 6; i++) {
+                const row = document.createElement('tr');
+                for (let j = 0; j < 7; j++) {
+                    const cell = document.createElement('td');
+                    if (i === 0 && j < firstDay) {
+                        const emptyCell = document.createElement('div');
+                        cell.appendChild(emptyCell);
+                    } else if (day > daysInMonth) {
+                        break;
+                    } else {
+                        const dayBtn = document.createElement('button');
+                        dayBtn.textContent = day;
+                        dayBtn.classList.add('day-btn');
+                        if (day === date.getDate()) {
+                            dayBtn.classList.add('active');
+                        }
+                        dayBtn.addEventListener('click', function () {
+                            document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
+                            this.classList.add('active');
+                        });
+                        cell.appendChild(dayBtn);
+                        day++;
+                    }
+                    row.appendChild(cell);
+                }
+                calendarBody.appendChild(row);
+            }
+        }
+
+        document.getElementById('prevMonth').addEventListener('click', function () {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar(currentDate);
+        });
+
+        document.getElementById('nextMonth').addEventListener('click', function () {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar(currentDate);
+        });
+
+        renderCalendar(currentDate);
+    });
+</script>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+c
