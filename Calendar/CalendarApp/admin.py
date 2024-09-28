@@ -1,8 +1,7 @@
-from django.contrib import admin
+# admin.py
 
-# Register your models here.
 from django.contrib import admin
-from .models import Event
+from .models import Event, Task
 
-# Rejestracja modelu Event w adminie
 admin.site.register(Event)
+admin.site.register(Task)

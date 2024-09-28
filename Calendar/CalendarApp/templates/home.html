@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
+    <!-- Existing head content -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendar</title>
+    <title>Kalendarz z Zadaniami</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -14,6 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
 
     <style>
+        /* Existing styles */
         body {
             background-color: #1a1a1a;
             color: #f4f4f4;
@@ -110,14 +112,31 @@
             height: 40px !important;
         }
 
+        /* Stylowanie nagłówków dni tygodnia */
+        .fc .fc-col-header-cell-cushion {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .fc .fc-col-header-cell-cushion .day-name {
+            font-size: 1.1rem;
+            color: #ffcc00;
+        }
+
+        .fc .fc-col-header-cell-cushion .day-date {
+            font-size: 0.9rem;
+            color: #cccccc;
+        }
+
         .fc .fc-col-header-cell {
-            font-size: 1.2rem;
-            padding: 10px 0;
-            color: #f4f4f4;
             background-color: #333;
             position: sticky;
             top: 0;
             z-index: 5;
+            border: 1px solid #444;
         }
 
         .fc .fc-timegrid-slot-label {
@@ -137,6 +156,7 @@
         .fc .fc-event {
             font-size: 0.9rem;
             padding: 5px;
+            overflow: hidden;
         }
 
         .context-menu {
@@ -190,6 +210,29 @@
         .day-section {
             margin-bottom: 20px;
         }
+
+        /* Zmiana koloru czcionki na czarną w modalu */
+        #eventModal .form-control,
+        #eventModal label,
+        #checklistSection {
+            color: black;
+        }
+
+        .completed-task {
+            text-decoration: line-through;
+        }
+
+        /* Dodatkowe style dla listy zadań na wydarzeniu */
+        .event-tasks {
+            margin: 5px 0 0 0;
+            padding-left: 20px;
+            font-size: 0.9em;
+            list-style-type: disc;
+        }
+
+        .fc-event-title {
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -201,8 +244,8 @@
             <button class="btn btn-primary btn-create-event" id="createEventButton">Create Event</button>
             <div class="mini-calendar-container">
                 <div class="mini-calendar-header">
-                    <span id="currentMonth">September 2024</span>
                     <button id="prevMonth" class="calendar-nav-btn">◄</button>
+                    <span id="currentMonth">Wrzesień 2024</span>
                     <button id="nextMonth" class="calendar-nav-btn">►</button>
                 </div>
                 <table class="mini-calendar-table">
@@ -245,49 +288,67 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="POST" id="eventForm">
+                <!-- Include CSRF token if needed -->
                 {% csrf_token %}
                 <div class="modal-header">
                     <h5 class="modal-title" id="eventModalLabel">Add/Edit Event</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Title</label>
-                        <input type="text" class="form-control" id="title" name="title" required>
+                    <!-- Event Form Elements -->
+                    <div id="eventDetailsSection">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Tytuł</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="start" class="form-label">Początek</label>
+                            <input type="datetime-local" class="form-control" id="start" name="start" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="end" class="form-label">Koniec</label>
+                            <input type="datetime-local" class="form-control" id="end" name="end" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="color" class="form-label">Kolor</label>
+                            <select class="form-control" id="color" name="color">
+                                <option value="red">Czerwony</option>
+                                <option value="blue">Niebieski</option>
+                                <option value="green">Zielony</option>
+                                <option value="orange">Pomarańczowy</option>
+                                <option value="purple">Fioletowy</option>
+                                <option value="yellow">Żółty</option>
+                                <option value="gray">Szary</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="importance" class="form-label">Ważność</label>
+                            <select class="form-control" id="importance" name="importance">
+                                <option value="lime">Ważne (Limonkowy)</option>
+                                <option value="cyan">Średnie (Cyjan)</option>
+                                <option value="pink">Niskie (Różowy)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="start" class="form-label">Start</label>
-                        <input type="datetime-local" class="form-control" id="start" name="start" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="end" class="form-label">End</label>
-                        <input type="datetime-local" class="form-control" id="end" name="end" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="color" class="form-label">Color</label>
-                        <select class="form-control" id="color" name="color">
-                            <option value="red">Red</option>
-                            <option value="blue">Blue</option>
-                            <option value="green">Green</option>
-                            <option value="orange">Orange</option>
-                            <option value="purple">Purple</option>
-                            <option value="yellow">Yellow</option>
-                            <option value="gray">Gray</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="importance" class="form-label">Importance</label>
-                        <select class="form-control" id="importance" name="importance">
-                            <option value="lime">Important (Lime)</option>
-                            <option value="cyan">Medium (Cyan)</option>
-                            <option value="pink">Low (Pink)</option>
-                        </select>
+
+                    <!-- Checklist Section -->
+                    <div id="checklistSection" style="display:none;">
+                        <div class="mb-3">
+                            <h5>Lista zadań</h5>
+                            <ul id="taskList"></ul>
+                            <input type="text" class="form-control" id="newTaskInput" placeholder="Dodaj nowe zadanie">
+                            <button type="button" class="btn btn-secondary mt-2" id="addTaskButton">Dodaj zadanie</button>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save changes</button>
-                    <button type="button" class="btn btn-danger" id="deleteEventButton">Delete</button>
+                    <!-- Modal buttons -->
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                    <button type="button" class="btn btn-primary" id="saveEventButton">Zapisz zmiany</button>
+                    <button type="button" class="btn btn-danger" id="deleteEventButton" style="display: none;">Usuń</button>
+                    <!-- Buttons to switch between event details and checklist -->
+                    <button type="button" class="btn btn-warning" id="listButton">Lista zadań</button>
+                    <button type="button" class="btn btn-info" id="editButton" style="display: none;">Edytuj</button>
                 </div>
             </form>
         </div>
@@ -299,22 +360,22 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="reportModalLabel">Generate Report</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="reportModalLabel">Generuj raport</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Select Report Time Frame</label>
+                    <label>Wybierz zakres raportu</label>
                     <select id="reportTimeFrame" class="form-control">
-                        <option value="week">Last Week</option>
-                        <option value="month">Last Month</option>
-                        <option value="3months">Last 3 Months</option>
+                        <option value="week">Ostatni tydzień</option>
+                        <option value="month">Ostatni miesiąc</option>
+                        <option value="3months">Ostatnie 3 miesiące</option>
                     </select>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="generateReportButton">Generate Report</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                <button type="button" class="btn btn-primary" id="generateReportButton">Generuj raport</button>
             </div>
         </div>
     </div>
@@ -322,7 +383,7 @@
 
 <!-- Graphical Report Representation -->
 <div class="container" id="reportGraphical" style="display:none;">
-    <h4>Graphical Representation of Events</h4>
+    <h4>Graficzna reprezentacja wydarzeń</h4>
     <table class="report-table" id="reportTable">
         <!-- Table dynamically populated -->
     </table>
@@ -331,59 +392,286 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         var calendarEl = document.getElementById('calendar');
+        var eventsData = [
+            {% for event in events %}
+            {
+                id: '{{ event.id }}',
+                title: '{{ event.title }}',
+                start: '{{ event.start|date:"Y-m-d\\TH:i:s" }}',
+                end: '{{ event.end|date:"Y-m-d\\TH:i:s" }}',
+                backgroundColor: '{{ event.color }}',
+                borderColor: '{{ event.importance }}',
+                textColor: 'white',
+                extendedProps: {
+                    tasks: [
+                        {% for task in event.tasks.all %}
+                        {
+                            description: '{{ task.description }}',
+                            completed: {{ task.completed|yesno:"true,false" }}
+                        },
+                        {% endfor %}
+                    ]
+                }
+            },
+            {% endfor %}
+        ];
+
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'timeGridWeek',
             height: "auto",
-            slotMinTime: '00:00:00',
-            slotMaxTime: '24:00:00',
             headerToolbar: false,
-            dateClick: function (info) {
-                var clickedDate = info.dateStr;
-                document.getElementById('start').value = clickedDate.slice(0, 16);
-                document.getElementById('end').value = clickedDate.slice(0, 16);
-                var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
-                eventModal.show();
+            slotMinTime: '00:00:00', // Pozostawiamy na 00:00:00
+            slotMaxTime: '24:00:00',
+            locale: 'pl', // Ustawienie lokalizacji na polską
+            firstDay: 1, // Tydzień zaczyna się od poniedziałku
+            slotLabelFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
             },
-            events: [
-                {% for event in events %}
-                {
-                    id: '{{ event.id }}',
-                    title: '{{ event.title }}',
-                    start: '{{ event.start|date:"Y-m-d\TH:i:s" }}',
-                    end: '{{ event.end|date:"Y-m-d\TH:i:s" }}',
-                    color: '{{ event.color }}',
-                    textColor: 'white',
-                    borderColor: '{{ event.importance }}',
-                },
-                {% endfor %}
-            ],
-            eventClick: function(info) {
-                document.getElementById('title').value = info.event.title;
-                document.getElementById('start').value = info.event.start.toISOString().slice(0, 16);
-                document.getElementById('end').value = info.event.end.toISOString().slice(0, 16);
-                document.getElementById('color').value = info.event.backgroundColor;
-                document.getElementById('importance').value = info.event.borderColor;
-                
-                var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
-                eventModal.show();
-
-                document.getElementById('deleteEventButton').onclick = function() {
-                    if (confirm('Are you sure you want to delete this event?')) {
-                        info.event.remove();
-                        eventModal.hide();
-                    }
+            eventTimeFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            },
+            dayHeaderContent: function(arg) {
+                var date = arg.date;
+                var dayName = date.toLocaleDateString('pl-PL', { weekday: 'long' });
+                var dayNumber = date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' });
+                return {
+                    html: '<div class="day-name">' + dayName.charAt(0).toUpperCase() + dayName.slice(1) + '</div>' +
+                          '<div class="day-date">' + dayNumber + '</div>'
                 };
+            },
+            dateClick: function (info) {
+                openEventModal(null, info.dateStr);
+            },
+            events: eventsData,
+            eventClick: function(info) {
+                openEventModal(info.event);
+            },
+            eventContent: function(arg) {
+                var event = arg.event;
+                var tasks = event.extendedProps.tasks || [];
+                var tasksHtml = tasks.map(function(task) {
+                    var checked = task.completed ? '✔️' : '❌';
+                    return '<li>' + checked + ' ' + task.description + '</li>';
+                }).join('');
+
+                var html = '<div class="fc-event-title">' + event.title + '</div>';
+                if (tasks.length > 0) {
+                    html += '<ul class="event-tasks">' + tasksHtml + '</ul>';
+                }
+
+                var customElement = document.createElement('div');
+                customElement.innerHTML = html;
+
+                return { domNodes: [customElement] };
+            },
+            viewDidMount: function(arg) {
+                // Znajdź najwcześniejsze wydarzenie w bieżącym widoku
+                var startDate = arg.view.currentStart;
+                var endDate = arg.view.currentEnd;
+                var eventsInView = calendar.getEvents().filter(function(event) {
+                    return event.start >= startDate && event.start < endDate;
+                });
+
+                var earliestTime = null;
+                eventsInView.forEach(function(event) {
+                    if (!earliestTime || event.start < earliestTime) {
+                        earliestTime = event.start;
+                    }
+                });
+
+                if (earliestTime) {
+                    // Ustaw scrollTime na godzinę przed najwcześniejszym wydarzeniem
+                    var scrollTime = new Date(earliestTime);
+                    scrollTime.setHours(scrollTime.getHours() - 1);
+                    var hours = scrollTime.getHours().toString().padStart(2, '0');
+                    var minutes = scrollTime.getMinutes().toString().padStart(2, '0');
+                    calendar.setOption('scrollTime', hours + ':' + minutes + ':00');
+                } else {
+                    // Jeśli brak wydarzeń, ustaw domyślne scrollTime
+                    calendar.setOption('scrollTime', '08:00:00');
+                }
             }
         });
         calendar.render();
 
-        document.getElementById('createEventButton').addEventListener('click', function () {
-            var now = new Date();
-            var currentDateTime = now.toISOString().slice(0, 16);
-            document.getElementById('start').value = currentDateTime;
-            document.getElementById('end').value = currentDateTime;
+        function openEventModal(event, dateStr = null) {
+            resetModal();
+
+            if (event) {
+                // Edycja istniejącego wydarzenia
+                document.getElementById('deleteEventButton').style.display = 'inline-block';
+                document.getElementById('editButton').style.display = 'inline-block';
+                document.getElementById('eventModalLabel').textContent = 'Edytuj wydarzenie';
+                document.getElementById('title').value = event.title;
+                document.getElementById('start').value = event.start.toISOString().slice(0, 16);
+                document.getElementById('end').value = event.end.toISOString().slice(0, 16);
+                document.getElementById('color').value = event.backgroundColor;
+                document.getElementById('importance').value = event.borderColor;
+
+                // Wczytaj zadania
+                if (event.extendedProps.tasks) {
+                    event.extendedProps.tasks.forEach(function(task) {
+                        addTaskToList(task.description, task.completed);
+                    });
+                }
+
+                document.getElementById('saveEventButton').onclick = function() {
+                    saveEvent(event);
+                };
+
+                document.getElementById('deleteEventButton').onclick = function() {
+                    deleteEvent(event);
+                };
+            } else {
+                // Tworzenie nowego wydarzenia
+                document.getElementById('deleteEventButton').style.display = 'none';
+                document.getElementById('editButton').style.display = 'none';
+                document.getElementById('eventModalLabel').textContent = 'Dodaj wydarzenie';
+                if (dateStr) {
+                    document.getElementById('start').value = dateStr.slice(0, 16);
+                }
+
+                document.getElementById('saveEventButton').onclick = function() {
+                    saveEvent();
+                };
+            }
+
             var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
             eventModal.show();
+        }
+
+        function resetModal() {
+            document.getElementById('eventDetailsSection').style.display = 'block';
+            document.getElementById('checklistSection').style.display = 'none';
+            document.getElementById('taskList').innerHTML = '';
+            document.getElementById('newTaskInput').value = '';
+            document.getElementById('title').value = '';
+            document.getElementById('start').value = '';
+            document.getElementById('end').value = '';
+            document.getElementById('color').value = 'blue';
+            document.getElementById('importance').value = 'cyan';
+        }
+
+        function addTaskToList(description, completed) {
+            var li = document.createElement('li');
+            var checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = completed;
+            checkbox.classList.add('task-checkbox');
+            checkbox.addEventListener('change', function () {
+                if (this.checked) {
+                    li.style.textDecoration = 'line-through';
+                } else {
+                    li.style.textDecoration = 'none';
+                }
+            });
+
+            var span = document.createElement('span');
+            span.textContent = ' ' + description;
+
+            li.appendChild(checkbox);
+            li.appendChild(span);
+            if (completed) {
+                li.style.textDecoration = 'line-through';
+            }
+            document.getElementById('taskList').appendChild(li);
+        }
+
+        document.getElementById('addTaskButton').addEventListener('click', function () {
+            var taskText = document.getElementById('newTaskInput').value.trim();
+            if (taskText) {
+                addTaskToList(taskText, false);
+                document.getElementById('newTaskInput').value = '';
+            }
+        });
+
+        document.getElementById('listButton').addEventListener('click', function () {
+            document.getElementById('eventDetailsSection').style.display = 'none';
+            document.getElementById('checklistSection').style.display = 'block';
+        });
+
+        document.getElementById('editButton').addEventListener('click', function () {
+            document.getElementById('eventDetailsSection').style.display = 'block';
+            document.getElementById('checklistSection').style.display = 'none';
+        });
+
+        function saveEvent(event = null) {
+            var eventData = {
+                title: document.getElementById('title').value,
+                start: document.getElementById('start').value,
+                end: document.getElementById('end').value,
+                color: document.getElementById('color').value,
+                importance: document.getElementById('importance').value,
+                tasks: getTasksFromList(),
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            };
+
+            var url = '';
+            if (event) {
+                // Edycja istniejącego wydarzenia
+                url = '/edit_event/' + event.id + '/';
+                eventData.id = event.id;
+            } else {
+                // Tworzenie nowego wydarzenia
+                url = '/add_event/';
+            }
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': eventData.csrfmiddlewaretoken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(eventData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    location.reload();
+                } else {
+                    console.error('Błąd podczas zapisywania wydarzenia:', data.errors);
+                }
+            })
+            .catch(error => {
+                console.error('Błąd:', error);
+            });
+        }
+
+        function deleteEvent(event) {
+            if (confirm('Czy na pewno chcesz usunąć to wydarzenie?')) {
+                fetch('/delete_event/' + event.id + '/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        location.reload();
+                    } else {
+                        console.error('Błąd podczas usuwania wydarzenia:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Błąd:', error);
+                });
+            }
+        }
+
+        function getTasksFromList() {
+            return Array.from(document.querySelectorAll('#taskList li')).map(li => ({
+                description: li.querySelector('span').textContent.trim(),
+                completed: li.querySelector('input[type="checkbox"]').checked
+            }));
+        }
+
+        document.getElementById('createEventButton').addEventListener('click', function () {
+            openEventModal();
         });
 
         document.getElementById('prevButton').addEventListener('click', function () {
@@ -436,7 +724,7 @@
             }).sort((a, b) => new Date(a.start) - new Date(b.start)); // Sort events by date, oldest to newest
 
             let reportContent = '';
-            const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const weekdays = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota'];
             const reportTable = document.getElementById('reportTable');
             reportTable.innerHTML = '';
 
@@ -472,7 +760,7 @@
             const blob = new Blob([reportContent], { type: 'text/plain' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `report_${timeFrame}.txt`;
+            link.download = `raport_${timeFrame}.txt`;
             link.click();
         });
 
@@ -487,7 +775,7 @@
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-            currentMonthDisplay.textContent = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            currentMonthDisplay.textContent = date.toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' });
 
             let day = 1;
             for (let i = 0; i < 6; i++) {

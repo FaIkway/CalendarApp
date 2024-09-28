@@ -1,6 +1,8 @@
+# forms.py
+
 from django import forms
 from django.utils import timezone
-from .models import Event
+from .models import Event, Task
 
 class EventForm(forms.ModelForm):
     class Meta:
@@ -24,3 +26,8 @@ class EventForm(forms.ModelForm):
         if timezone.is_naive(end):
             return timezone.make_aware(end)
         return end
+
+class TaskForm(forms.ModelForm):
+    class Meta:
+        model = Task
+        fields = ['description', 'completed']

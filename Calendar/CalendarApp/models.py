@@ -1,3 +1,5 @@
+# models.py
+
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -28,3 +30,11 @@ class Event(models.Model):
 
     def __str__(self):
         return self.title
+
+class Task(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='tasks')
+    description = models.CharField(max_length=255)
+    completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.description
